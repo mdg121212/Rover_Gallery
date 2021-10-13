@@ -9,6 +9,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.mattg.rovergallery.Event
 import com.mattg.rovergallery.R
+import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.models.Photo
 import com.mattg.rovergallery.network.PhotosPagingSource
 import com.mattg.rovergallery.repositories.PhotosRepository
@@ -30,8 +31,8 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
         PagingConfig(pageSize = 25)
     ) {
         PhotosPagingSource(app, photoRepo)
-    }.flow
-        .cachedIn(viewModelScope)
+    }.flow.cachedIn(viewModelScope)
+
     /**
      * Gets an initial bit of data for the homescreen prior to search
      * parameters being chosen
@@ -49,3 +50,27 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
     }
 
 }
+
+/**
+ * Classes borrowed from Google Paging Example, modified to use
+ */
+private val UiAction.Scroll.shouldFetchMore
+    get() = visibleItemCount + lastVisibleItemPosition + VISIBLE_THRESHOLD >= totalItemCount
+
+sealed class UiAction {
+    data class Search(val query: String) : UiAction()
+    data class Scroll(
+        val visibleItemCount: Int,
+        val lastVisibleItemPosition: Int,
+        val totalItemCount: Int
+    ) : UiAction()
+}
+
+data class UiState(
+    val query: String,
+    val searchResult: ParameterResponse
+)
+
+private const val VISIBLE_THRESHOLD = 5
+private const val LAST_SEARCH_QUERY: String = "last_search_query"
+private const val DEFAULT_QUERY = "Curiosity"

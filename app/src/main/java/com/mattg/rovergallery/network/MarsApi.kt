@@ -10,10 +10,10 @@ interface MarsApi {
     /**
      * Returns the default page from this api
      */
-    @GET("/curiosity/photos?sol=1000")
-    fun getDefault(
-        @Query("api_key") key: String,
-        @Query("page") page: Int) : ParameterResponse
+    @GET("curiosity/photos?&sol=1000")
+    suspend fun getDefault(
+        @Query("page") page: Int,
+        @Query("api_key") key: String) : ParameterResponse
 
     /**
      * Returns the default page suggested by this api but allows for

@@ -5,11 +5,15 @@ package com.mattg.rovergallery.models
  * This call can return the number of available photos, sols, and other
  * useful information for more specific queries.
  */
-class Photo {
+class ManifestPhoto {
     var sol = 0
     var earth_date: String? = null
     var total_photos = 0
     var cameras: List<String>? = null
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
 }
 
 class PhotoManifest {
@@ -20,7 +24,7 @@ class PhotoManifest {
     var max_sol = 0
     var max_date: String? = null
     var total_photos = 0
-    var photos: List<Photo>? = null
+    var photos: List<ManifestPhoto>? = null
 }
 
 class ManifestResponse {

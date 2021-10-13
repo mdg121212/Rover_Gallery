@@ -12,6 +12,19 @@ class Camera {
     var full_name: String? = null
 }
 
+class Photo {
+    var id = 0
+    var sol = 0
+    var camera: Camera? = null
+    var img_src: String? = null
+    var earth_date: String? = null
+    var rover: Rover? = null
+
+    override fun equals(other: Any?): Boolean {
+        return super.equals(other)
+    }
+}
+
 class Rover {
     var id = 0
     var name: String? = null

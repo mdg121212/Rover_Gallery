@@ -56,7 +56,6 @@ object MarsApiCaller {
         val api = Retrofit.Builder()
             .baseUrl(if(type == 1) BASE_URL else MANIFEST_URL)
             .addConverterFactory(GsonConverterFactory.create())
-            .addConverterFactory(ScalarsConverterFactory.create())
             .client(okHttpClient.build())
             .build()
         return api
@@ -87,10 +86,10 @@ object MarsApiCaller {
     /**
      * Returns an api call for photos by rover ready to enqueue
      */
-    fun getPhotosByRover(context: Context, roverName: RoverName, page: Int): ParameterResponse {
+    suspend fun getPhotosByRover(context: Context, roverName: RoverName, page: Int): ParameterResponse {
         return getApi(context, 1).create(MarsApi::class.java).getDefault(
-            context.resources.getString(R.string.api_key),
-            page
+            page,
+            context.resources.getString(R.string.api_key)
         )
     }
 

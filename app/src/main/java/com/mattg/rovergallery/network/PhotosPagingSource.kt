@@ -1,6 +1,7 @@
 package com.mattg.rovergallery.network
 
 import android.app.Application
+import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.mattg.rovergallery.R
@@ -19,7 +20,7 @@ private const val NETWORK_PAGE_SIZE = 25
  */
 class PhotosPagingSource(
     val application: Application,
-    private val photoRepo: PhotosRepository
+    private val photoRepo: PhotosRepository //to handle the network call
 ) : PagingSource<Int, Photo>() {
 
     override fun getRefreshKey(state: PagingState<Int, Photo>): Int? {
@@ -40,8 +41,9 @@ class PhotosPagingSource(
             )
 
             val photos = response.photos!!
+            Log.d("DATATEST", "GOT PHOTOS ${photos.size}")
             val nextKey =
-                if (photos.isEmpty() == true) {
+                if (photos.isEmpty()) {
                     null
                 } else {
                     params.loadSize / NETWORK_PAGE_SIZE
@@ -52,9 +54,12 @@ class PhotosPagingSource(
                 nextKey = nextKey
             )
         }catch (e: IOException) {
+            Log.d("DATATEST", e.toString())
             // IOException for network failures.
             return LoadResult.Error(e)
         } catch (e: HttpException) {
+            Log.d("DATATEST", e.toString())
+
             // HttpException for any non-2xx HTTP status codes.
             return LoadResult.Error(e)
         }
