@@ -1,4 +1,4 @@
-package com.mattg.rovergallery
+package com.mattg.rovergallery.utils
 
 /**
  * Event wrapper class, original code from

@@ -1,5 +1,9 @@
 package com.mattg.rovergallery.models
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.RawValue
+
 /**
  * Basic classes to represent the API return results of a specific request for
  * photos
@@ -10,19 +14,8 @@ class Camera {
     var name: String? = null
     var rover_id = 0
     var full_name: String? = null
-}
 
-class Photo {
-    var id = 0
-    var sol = 0
-    var camera: Camera? = null
-    var img_src: String? = null
-    var earth_date: String? = null
-    var rover: Rover? = null
-
-    override fun equals(other: Any?): Boolean {
-        return super.equals(other)
-    }
+    fun titleName(): String = "Camera: $full_name"
 }
 
 class Rover {
@@ -31,6 +24,7 @@ class Rover {
     var landing_date: String? = null
     var launch_date: String? = null
     var status: String? = null
+    fun titleName(): String = "Rover Name: $name"
 }
 
 

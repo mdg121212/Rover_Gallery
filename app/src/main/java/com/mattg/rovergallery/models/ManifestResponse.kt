@@ -10,7 +10,6 @@ class ManifestPhoto {
     var earth_date: String? = null
     var total_photos = 0
     var cameras: List<String>? = null
-
     override fun equals(other: Any?): Boolean {
         return super.equals(other)
     }

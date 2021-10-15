@@ -1,4 +1,4 @@
-package com.mattg.rovergallery
+package com.mattg.rovergallery.utils
 
 /**
  * Interface to handle observation of live data events

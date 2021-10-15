@@ -16,17 +16,8 @@ import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
 object MarsApiCaller {
-    private val BASE_URL = "https://api.nasa.gov/mars-photos/api/v1/rovers/"
+    private val BASE_URL = "https://api.nasa.gov/"
     private val MANIFEST_URL = "https://api.nasa.gov/mars-photos/api/v1/manifests/"
-
-    //curiosity/photos?sol=1000&api_key=DEMO_KEY"
-    //Example queries
-    //
-    //https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=DEMO_KEY
-    //
-    //https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&camera=fhaz&api_key=DEMO_KEY
-    //
-    //https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&page=2&api_key=DEMO_KEY
 
     private fun getApi(context: Context, type: Int) : Retrofit {
         //   if(api == null){
@@ -83,13 +74,13 @@ object MarsApiCaller {
 
     }
 
-    /**
-     * Returns an api call for photos by rover ready to enqueue
-     */
-    suspend fun getPhotosByRover(context: Context, roverName: RoverName, page: Int): ParameterResponse {
-        return getApi(context, 1).create(MarsApi::class.java).getDefault(
+    suspend fun getPhotosByRoverAndSol(context: Context, roverName: String, sol: Int, page: Int) : ParameterResponse {
+        return getApi(context, 1).create(MarsApi::class.java).getPageByRoverAndSol(
+            roverName,
+            sol,
             page,
-            context.resources.getString(R.string.api_key)
+            context.resources.getString(R.string.api_key),
+
         )
     }
 

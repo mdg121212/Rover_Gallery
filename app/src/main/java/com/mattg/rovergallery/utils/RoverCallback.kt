@@ -1,8 +1,6 @@
 package com.mattg.rovergallery
 
-import android.graphics.Bitmap
 import com.mattg.rovergallery.models.Photo
-import com.mattg.rovergallery.utils.RoverName
 
 /**
  * Callback classes for options menu to communicate with view model
@@ -23,4 +21,8 @@ class CompleteCallback(val complete : (complete: Boolean) -> Unit) {
 
 class RecyclerCallback(val clicked: (photo: Photo, position: Int) -> Unit) {
     fun photoClicked(photo: Photo, position: Int) = clicked(photo, position)
+}
+
+class DataCallback(var onData: (wasData: Boolean) -> Unit) {
+    fun wasData(wasData: Boolean) = onData(wasData)
 }

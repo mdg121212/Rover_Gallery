@@ -1,4 +1,4 @@
-package com.mattg.rovergallery
+package com.mattg.rovergallery.utils
 
 /**
  * Class to observe events, triggers event logic and returns the data.

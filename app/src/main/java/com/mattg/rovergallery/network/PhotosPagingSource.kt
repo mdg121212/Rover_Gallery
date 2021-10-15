@@ -4,7 +4,9 @@ import android.app.Application
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.mattg.rovergallery.DataCallback
 import com.mattg.rovergallery.R
+import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.models.Photo
 import com.mattg.rovergallery.repositories.PhotosRepository
 import retrofit2.HttpException
@@ -20,7 +22,11 @@ private const val NETWORK_PAGE_SIZE = 25
  */
 class PhotosPagingSource(
     val application: Application,
-    private val photoRepo: PhotosRepository //to handle the network call
+    private val photoRepo: PhotosRepository,
+    private val sol: Int?,
+    private val rover: String?,//to handle the network calls
+    val callback: DataCallback
+
 ) : PagingSource<Int, Photo>() {
 
     override fun getRefreshKey(state: PagingState<Int, Photo>): Int? {
@@ -35,31 +41,52 @@ class PhotosPagingSource(
         val pageIndex = params.key ?: NASA_STARTING_PAGE_INDEX
 
         return try {
-            val response = photoRepo.getPhotosFromApi(
-                application.resources.getString(R.string.api_key),
-                pageIndex
-            )
+            var response: ParameterResponse
+            if(rover != null && sol != null) {
+                Log.d("PageTrack", "getting updated data with rover: $rover and sol: $sol")
+                response = photoRepo.getSearchedPhotosFromApiByRover(
+                    application.resources.getString(R.string.api_key),
+                    rover,
+                    sol,
+                    pageIndex
+                )
+            } else {
+                Log.d("DATATEST", "getting standard data")
+                response = photoRepo.getSearchedPhotosFromApiByRover(
+                    application.resources.getString(R.string.api_key),
+                    "Curiosity",
+                    1000,
+                    pageIndex
+                )
+            }
 
             val photos = response.photos!!
+            if(photos.isEmpty()){
+                callback.wasData(false)
+            } else {
+                callback.wasData(true)
+            }
             Log.d("DATATEST", "GOT PHOTOS ${photos.size}")
             val nextKey =
                 if (photos.isEmpty()) {
                     null
                 } else {
-                    params.loadSize / NETWORK_PAGE_SIZE
+                    pageIndex + 1
                 }
             LoadResult.Page(
                 data = photos,
                 prevKey = if (pageIndex == NASA_STARTING_PAGE_INDEX) null else pageIndex,
                 nextKey = nextKey
             )
+
         }catch (e: IOException) {
-            Log.d("DATATEST", e.toString())
+            Log.d("DATATESTERROR", e.toString())
+            callback.wasData(false)
             // IOException for network failures.
             return LoadResult.Error(e)
         } catch (e: HttpException) {
-            Log.d("DATATEST", e.toString())
-
+            Log.d("DATATESTERROR", e.toString())
+            callback.wasData(false)
             // HttpException for any non-2xx HTTP status codes.
             return LoadResult.Error(e)
         }

@@ -8,14 +8,6 @@ import retrofit2.http.*
 interface MarsApi {
 
     /**
-     * Returns the default page from this api
-     */
-    @GET("curiosity/photos?&sol=1000")
-    suspend fun getDefault(
-        @Query("page") page: Int,
-        @Query("api_key") key: String) : ParameterResponse
-
-    /**
      * Returns the default page suggested by this api but allows for
      * changing of the rover
      */
@@ -24,6 +16,13 @@ interface MarsApi {
                        @Path("rover") rover: String,
                        @Query("page") page: Int,
                        @Query("api_key") key: String) : Call<ParameterResponse>
+
+    @GET("mars-photos/api/v1/rovers/{name}/photos")
+    suspend fun getPageByRoverAndSol(
+        @Path("name") rover: String,
+        @Query("sol") sol: Int,
+        @Query("page") page: Int,
+        @Query("api_key") key: String) : ParameterResponse
 
     /**
      * Gets the photos from a given rover at a given time
