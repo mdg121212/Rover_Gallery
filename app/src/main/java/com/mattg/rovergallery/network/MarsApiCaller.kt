@@ -1,8 +1,11 @@
 package com.mattg.rovergallery.network
 
 import android.content.Context
+import android.util.Log
 import com.mattg.rovergallery.BuildConfig
+import com.mattg.rovergallery.ManifestCallback
 import com.mattg.rovergallery.R
+import com.mattg.rovergallery.models.ManifestResponse
 import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.utils.RoverCameras
 import com.mattg.rovergallery.utils.RoverName
@@ -10,9 +13,10 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.converter.scalars.ScalarsConverterFactory
 import java.util.concurrent.TimeUnit
 
 object MarsApiCaller {
@@ -70,8 +74,27 @@ object MarsApiCaller {
      * Will make a call for the given rovers manifest, where information about
      * amount of photos, when they were taken, and by what camera can be retrieved
      */
-    fun getManifestForRover(context: Context, roverName: RoverName) {
+    fun getManifestForRover(context: Context, roverName: String, callback: ManifestCallback) {
+        val manifest =  getApi(context, 0).create(MarsApi::class.java).getBasicManifestForRover(
+            roverName,
+            context.resources.getString(R.string.api_key),
+            ).enqueue(
+            object : Callback<ManifestResponse>{
+                override fun onResponse(
+                    call: Call<ManifestResponse>,
+                    response: Response<ManifestResponse>
+                ) {
+                    if(response.isSuccessful){
+                        response.body()?.let { callback.onData(it) }
+                    }
+                }
 
+                override fun onFailure(call: Call<ManifestResponse>, t: Throwable) {
+                    Log.e("APIERROR", "${t.message}")
+                }
+
+            }
+            )
     }
 
     suspend fun getPhotosByRoverAndSol(context: Context, roverName: String, sol: Int, page: Int) : ParameterResponse {
@@ -79,8 +102,7 @@ object MarsApiCaller {
             roverName,
             sol,
             page,
-            context.resources.getString(R.string.api_key),
-
+            context.resources.getString(R.string.api_key)
         )
     }
 

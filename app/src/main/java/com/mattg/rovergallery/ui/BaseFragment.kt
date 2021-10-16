@@ -1,6 +1,7 @@
 package com.mattg.rovergallery.ui
 
 import android.content.Context
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.AdapterView
@@ -16,7 +17,7 @@ import com.mattg.rovergallery.databinding.DialogSelectionBinding
 
 open class BaseFragment : Fragment() {
 
-    private lateinit var photoOptionsDialog: BottomSheetDialog
+     var photoOptionsDialog: BottomSheetDialog? = null
 
     fun showBottomSheetDetailDialog(
         context: Context
@@ -78,16 +79,17 @@ open class BaseFragment : Fragment() {
                 completeCallback.onComplete(complete = true)
             }
 
-            photoOptionsDialog.show()
+            photoOptionsDialog?.show()
         }
 
 
     }
     fun closeBottomSheet(){
+        Log.d("EVENTCHECK", "close dialog called")
         if(photoOptionsDialog == null){
             return
         } else {
-            photoOptionsDialog.dismissWithAnimation
+            photoOptionsDialog?.dismiss()
         }
     }
 

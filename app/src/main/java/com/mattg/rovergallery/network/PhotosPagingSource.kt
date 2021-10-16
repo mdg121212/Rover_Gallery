@@ -25,7 +25,6 @@ class PhotosPagingSource(
     private val photoRepo: PhotosRepository,
     private val sol: Int?,
     private val rover: String?,//to handle the network calls
-    val callback: DataCallback
 
 ) : PagingSource<Int, Photo>() {
 
@@ -48,7 +47,7 @@ class PhotosPagingSource(
                     application.resources.getString(R.string.api_key),
                     rover,
                     sol,
-                    pageIndex
+                    pageIndex,
                 )
             } else {
                 Log.d("DATATEST", "getting standard data")
@@ -56,16 +55,12 @@ class PhotosPagingSource(
                     application.resources.getString(R.string.api_key),
                     "Curiosity",
                     1000,
-                    pageIndex
+                    pageIndex,
                 )
             }
 
             val photos = response.photos!!
-            if(photos.isEmpty()){
-                callback.wasData(false)
-            } else {
-                callback.wasData(true)
-            }
+
             Log.d("DATATEST", "GOT PHOTOS ${photos.size}")
             val nextKey =
                 if (photos.isEmpty()) {
@@ -81,12 +76,10 @@ class PhotosPagingSource(
 
         }catch (e: IOException) {
             Log.d("DATATESTERROR", e.toString())
-            callback.wasData(false)
             // IOException for network failures.
             return LoadResult.Error(e)
         } catch (e: HttpException) {
             Log.d("DATATESTERROR", e.toString())
-            callback.wasData(false)
             // HttpException for any non-2xx HTTP status codes.
             return LoadResult.Error(e)
         }

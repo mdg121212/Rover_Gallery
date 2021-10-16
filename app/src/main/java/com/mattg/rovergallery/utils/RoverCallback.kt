@@ -1,5 +1,6 @@
 package com.mattg.rovergallery
 
+import com.mattg.rovergallery.models.ManifestResponse
 import com.mattg.rovergallery.models.Photo
 
 /**
@@ -25,4 +26,8 @@ class RecyclerCallback(val clicked: (photo: Photo, position: Int) -> Unit) {
 
 class DataCallback(var onData: (wasData: Boolean) -> Unit) {
     fun wasData(wasData: Boolean) = onData(wasData)
+}
+
+class ManifestCallback(var onData: (data: ManifestResponse) -> Unit) {
+    fun onResponse(data: ManifestResponse) = onData(data)
 }

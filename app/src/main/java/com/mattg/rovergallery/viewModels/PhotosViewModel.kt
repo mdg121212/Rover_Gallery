@@ -2,6 +2,10 @@ package com.mattg.rovergallery.viewModels
 
 import android.app.Application
 import android.util.Log
+import android.view.View
+import android.widget.TextView
+import androidx.databinding.Bindable
+import androidx.databinding.BindingAdapter
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -11,6 +15,8 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.mattg.rovergallery.DataCallback
+import com.mattg.rovergallery.ManifestCallback
+import com.mattg.rovergallery.models.ManifestResponse
 import com.mattg.rovergallery.utils.Event
 import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.models.Photo
@@ -20,61 +26,47 @@ import com.mattg.rovergallery.utils.RoverCameras
 import com.mattg.rovergallery.utils.RoverName
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.cache
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.retry
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import okhttp3.internal.notify
 import java.util.concurrent.Flow
 
 class PhotosViewModel(app: Application) : AndroidViewModel(app) {
-    //https://proandroiddev.com/android-singleliveevent-redux-with-kotlin-flow-b755c70bb055
-    sealed class Event {
-        object CloseDialog: Event()
-        object ToggleProgress: Event()
-        data class ShowSnackBar(val text: String): Event()
-        data class ShowToast(val text: String): Event()
-    }
 
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    val eventsFlow = eventChannel.receiveAsFlow()
+//    sealed class Event {
+//        object CloseDialog: Event()
+//        object ToggleProgress: Event()
+//        data class ShowSnackBar(val text: String): Event()
+//        data class ShowToast(val text: String): Event()
+//    }
+//
+//    private val eventChannel = Channel<Event>(Channel.BUFFERED)
+//    val eventsFlow = eventChannel.receiveAsFlow()
+
 
     private val photoRepo = PhotosRepository(app)
-    private val _cameraChoice = MutableLiveData<RoverCameras>()
-
-    private val _pagingData = MutableLiveData<PagingData<Photo>>()
     //public so that they can be data bound
     val _roverChoice = MutableLiveData<String>("Curiosity")
     val _solChoice = MutableLiveData<Int>(1000)
+    val _solChoiceString = MutableLiveData<String>("1000")
     var _selectedPhoto = MutableLiveData<Photo>()
+    var _manifestResponse = MutableLiveData<ManifestResponse>()
+    val manifestResponse: LiveData<ManifestResponse> get() = _manifestResponse
 
+    private val _toastEvent = MutableLiveData<Event<String>>()
+    private val _spinnerEvent = MutableLiveData<Event<Int>>()
+    private val _dialogEvent = MutableLiveData<Event<Int>>()
+    val toastEvent: LiveData<Event<String>> get() = _toastEvent
+    val spinnerEvent: LiveData<Event<Int>> get() = _spinnerEvent
+    val dialogEvent: LiveData<Event<Int>> get() = _dialogEvent
 
-    /**
-     * callback to handle no result case
-     */
-    private var callback = DataCallback {
-        if (it) {
-            Log.d("CALLBACKTEST", "GOT DATA")
-            viewModelScope.launch {
-                eventChannel.send(Event.CloseDialog)
-                eventChannel.send(Event.ToggleProgress)
-            }
-
-        } else {
-            Log.d("CALLBACKTEST", "GOT NO DATA")
-            viewModelScope.launch {
-                eventChannel.send(Event.ShowToast("No photos found for that sol :("))
-            } }
-        }
-
-
+    //initialize the flow variable with default parameters
     var flow = Pager(
         // Configure how data is loaded by passing additional properties to
         // PagingConfig, such as prefetchDistance.
         PagingConfig(pageSize = 25)
     ) {
-        PhotosPagingSource(app, photoRepo, _solChoice.value, _roverChoice.value, callback)
+        PhotosPagingSource(app, photoRepo, _solChoice.value, _roverChoice.value)
     }.flow.cachedIn(viewModelScope)
 
     /**
@@ -89,7 +81,6 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
                     getApplication(),
                     it1,
                     it,
-                    callback
                 )
             }
         }
@@ -98,31 +89,15 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
             flow = Pager(
                 PagingConfig(pageSize = 25)
             ) {
-                //PhotosPagingSource(getApplication(), photoRepo, sol, rover)
                   it
             }.flow.cachedIn(viewModelScope)
             Log.d("PageTrack", "returning newly retrieved flow")
+            toggleSpinner()
             return flow
         }
         //return current data if not changed
         Log.d("PageTrack", "returning old flow")
         return flow;
-    }
-
-    /**
-     * Gets an initial bit of data for the homescreen prior to search
-     * parameters being chosen
-     */
-    fun getInitialApiData() {
-
-    }
-
-    /**
-     * Gets more specific data for the home screen, once a set of seach paramters has
-     * been chosen
-     */
-    fun getSearchValueApiData(){
-
     }
 
     /**
@@ -140,28 +115,39 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
         _solChoice.postValue(newDate)
     }
 
+    /**
+     * Event trigger for view
+     */
+    fun closeDialog() {
+        Log.d("EVENTCHECK", "close dialog posting event")
+        _dialogEvent.postValue(Event(0))
+    }
+
+    fun toggleSpinner() {
+        Log.d("EVENTCHECK", "toggle spinner posting event")
+        _spinnerEvent.postValue(Event(0))
+    }
+
+    /**
+     * Gets the manifest data for a chosen rover (for detail fragments bottom sheet info view)
+     */
+    fun getManifest() {
+        _roverChoice.value?.let {
+            photoRepo.getManifest(
+                getApplication(),
+                it,
+                ManifestCallback(){ response ->
+                _manifestResponse.postValue(response)
+                }
+            )
+        }
+    }
+
+    object bindingObject{
+        @JvmStatic
+        @BindingAdapter("android:text")
+        fun setIntText(textView: TextView, number: Int) {
+            textView.text = number.toString()
+        }
+    }
 }
-
-/**
- * Classes borrowed from Google Paging Example, modified to use
- */
-private val UiAction.Scroll.shouldFetchMore
-    get() = visibleItemCount + lastVisibleItemPosition + VISIBLE_THRESHOLD >= totalItemCount
-
-sealed class UiAction {
-    data class Search(val query: String) : UiAction()
-    data class Scroll(
-        val visibleItemCount: Int,
-        val lastVisibleItemPosition: Int,
-        val totalItemCount: Int
-    ) : UiAction()
-}
-
-data class UiState(
-    val query: String,
-    val searchResult: ParameterResponse
-)
-
-private const val VISIBLE_THRESHOLD = 5
-private const val LAST_SEARCH_QUERY: String = "last_search_query"
-private const val DEFAULT_QUERY = "Curiosity"

@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -17,10 +18,10 @@ import com.mattg.rovergallery.*
 import com.mattg.rovergallery.databinding.FragmentFirstBinding
 import com.mattg.rovergallery.utils.EventObserver
 import com.mattg.rovergallery.viewModels.PhotosViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -30,15 +31,13 @@ class HomeFragment : BaseFragment() {
     private var _binding: FragmentFirstBinding? = null
     private lateinit var viewModel: PhotosViewModel
     private lateinit var photoAdapter: PhotosAdapter
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
+    private var job: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         _binding = FragmentFirstBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(requireActivity()).get(PhotosViewModel::class.java)
         binding.viewModel = viewModel
@@ -51,49 +50,52 @@ class HomeFragment : BaseFragment() {
         initViews()
         CoroutineScope(Dispatchers.IO).launch {
             observeSearch()
-            observeViewModel()
+
         }
+        observeViewModel()
+    }
 
-
+    override fun onStop() {
+        super.onStop()
+        job?.cancel()
     }
 
     /**
      * Observe live data variables
      */
-    private suspend fun observeViewModel() {
-            viewModel.eventsFlow.collectLatest {
-                when(it) {
-                    PhotosViewModel.Event.ToggleProgress -> {
-                        Log.d("FLOWEVENT", "progress")
+    private fun observeViewModel() {
+        viewModel.toastEvent.observe(viewLifecycleOwner) {
+            it.getContentIfNotHandled()?.apply {
+                Log.d("EVENTCHECK", "toast event received")
+                Toast.makeText(requireContext(), this, Toast.LENGTH_SHORT).show()
+            }
+        }
+        viewModel.dialogEvent.observe(viewLifecycleOwner){
+            it.getContentIfNotHandled()?.apply {
+                Log.d("EVENTCHECK", "dialog event received")
+                 closeBottomSheet()
+            }
+        }
+        viewModel.spinnerEvent.observe(viewLifecycleOwner){
+            it.getContentIfNotHandled()?.apply {
+                Log.d("EVENTCHECK", "spinner event received")
+                when(this){
+                    0 ->
+                    {
+                        Log.d("EVENTCHECK", "spinner event received setting gone")
+                        binding.progressMain.visibility = View.GONE
                     }
-                    is PhotosViewModel.Event.ShowToast -> {
-                        Log.d("FLOWEVENT", "show toast")
-
-                    }
-                    PhotosViewModel.Event.CloseDialog -> {
-                        Log.d("FLOWEVENT", "close dialog")
+                    1 ->
+                    {
+                        Log.d("EVENTCHECK", "spinner event received setting visible")
+                        binding.progressMain.visibility = View.VISIBLE
                     }
                 }
             }
-//        viewModel.toastEvent.observe(viewLifecycleOwner) {
-//            it.getContentIfNotHandled()?.apply {
-//                Toast.makeText(requireContext(), it.getContentIfNotHandled().toString(), Toast.LENGTH_SHORT).show()
-//            }
-//        }
-//        viewModel.closeDialogEvent.observe(viewLifecycleOwner){
-//            it.getContentIfNotHandled()?.apply {
-//                if(it.getContentIfNotHandled() == true) closeBottomSheet()
-//            }
-//        }
-//        viewModel.mainSpinnerVisible.observe(viewLifecycleOwner){
-//            it.getContentIfNotHandled()?.apply {
-//               if (it.getContentIfNotHandled() == true)
-//                   binding.progressMain.visibility = View.VISIBLE else binding.progressMain.visibility = View.GONE
-//            }
-//        }
+        }
     }
 
-    private suspend fun observeSearch(){
+    private suspend fun observeSearch() {
         viewModel.getFlow()?.collectLatest {
             photoAdapter.submitData(it)
         }
@@ -105,13 +107,20 @@ class HomeFragment : BaseFragment() {
     private fun initViews() {
         binding.floatingActionButton2.setOnClickListener {
             val roverOptionCallback  = RoverCallback{ rover, position ->
+                Log.d("EVENTCHECK", "rover callback received")
                 viewModel.setRoverSelection(rover)
             }
             val dateCallback = DateCallback {oldDate, newDate ->
+                Log.d("EVENTCHECK", "date callback received")
                 viewModel.setDateSelection(newDate)
+                binding.tvMainDate.setText(newDate.toString())
             }
             val doneCallback = CompleteCallback { complete ->
+                viewModel.closeDialog()
+                viewModel.toggleSpinner()
+                //closeBottomSheet()
                 CoroutineScope(Dispatchers.IO).launch {
+                    Log.d("EVENTCHECK", "done callback received")
                     observeSearch()
                 }
             }
