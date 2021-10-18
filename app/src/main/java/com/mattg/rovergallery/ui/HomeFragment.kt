@@ -1,12 +1,8 @@
 package com.mattg.rovergallery.ui
 
-import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -14,7 +10,6 @@ import androidx.paging.LoadState
 import androidx.recyclerview.widget.GridLayoutManager
 import com.mattg.rovergallery.CompleteCallback
 import com.mattg.rovergallery.PhotosAdapter
-import com.mattg.rovergallery.R
 import com.mattg.rovergallery.RecyclerCallback
 import com.mattg.rovergallery.databinding.FragmentFirstBinding
 import com.mattg.rovergallery.viewModels.PhotosViewModel
@@ -22,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -46,7 +42,6 @@ class HomeFragment : BaseFragment() {
 
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.clError.visibility = View.GONE
@@ -109,7 +104,6 @@ class HomeFragment : BaseFragment() {
     /**
      * Initialize adapter and callback for this view
      */
-    @RequiresApi(Build.VERSION_CODES.O)
     private fun initViews() {
         binding.btnDateSearch.setOnClickListener {
             val doneCallback = CompleteCallback { complete ->
@@ -136,7 +130,7 @@ class HomeFragment : BaseFragment() {
         //add callback for adapter results
         val callback = RecyclerCallback { photo, position ->
             viewModel.setPhoto(photo)
-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            findNavController().navigate(com.mattg.rovergallery.R.id.action_FirstFragment_to_SecondFragment)
         }
         photoAdapter.apply {
             setCallBack(callback)

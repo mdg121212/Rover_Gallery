@@ -35,7 +35,6 @@ fun getProgressDrawable(context: Context) : CircularProgressDrawable {
 
     }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun String.toLocalDate(): LocalDate? {
     return if(this.isNotEmpty() && this.length == 10) {
         val returnFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
@@ -45,7 +44,6 @@ fun String.toLocalDate(): LocalDate? {
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.O)
 fun Long.fromCalenderSelection(): String {
     val returnFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val ldt: LocalDateTime =
