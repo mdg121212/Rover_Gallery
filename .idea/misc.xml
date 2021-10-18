@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="../../../../layout/custom_preview.xml" value="0.15989583333333332" />
         <entry key="app/src/main/res/drawable/drawable_progress.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/loading_icon.xml" value="0.1" />
         <entry key="app/src/main/res/drawable/progress_animation.xml" value="0.1" />
@@ -10,11 +11,12 @@
         <entry key="app/src/main/res/drawable/red_gradient.xml" value="0.27395833333333336" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.1328125" />
         <entry key="app/src/main/res/layout/content_main.xml" value="0.1" />
-        <entry key="app/src/main/res/layout/dialog_detail.xml" value="0.335" />
+        <entry key="app/src/main/res/layout/dialog_date_pick.xml" value="0.20625" />
+        <entry key="app/src/main/res/layout/dialog_detail.xml" value="0.328149300155521" />
         <entry key="app/src/main/res/layout/dialog_selection.xml" value="0.335" />
-        <entry key="app/src/main/res/layout/fragment_first.xml" value="0.20833333333333334" />
+        <entry key="app/src/main/res/layout/fragment_first.xml" value="0.2543859649122807" />
         <entry key="app/src/main/res/layout/fragment_options.xml" value="0.11875" />
-        <entry key="app/src/main/res/layout/fragment_second.xml" value="0.375" />
+        <entry key="app/src/main/res/layout/fragment_second.xml" value="0.24795640326975477" />
         <entry key="app/src/main/res/layout/item_rv_photo.xml" value="0.19318181818181818" />
       </map>
     </option>

@@ -1,9 +1,5 @@
 package com.mattg.rovergallery.models
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-import kotlinx.parcelize.RawValue
-
 /**
  * Basic classes to represent the API return results of a specific request for
  * photos

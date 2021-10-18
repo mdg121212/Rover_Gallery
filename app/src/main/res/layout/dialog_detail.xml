@@ -1,56 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="manifest"
+            type="com.mattg.rovergallery.models.ManifestResponse" />
+    </data>
 
-    <TextView
-        android:id="@+id/tvRoverNameDetail"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Rover Name:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/tvRoverLaunch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Rover Launch:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRoverNameDetail" />
+        <TextView
+            android:id="@+id/tvRoverNameDetailTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/rover_name_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tvRoverLand"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:text="Rover Landing:"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/tvRoverLaunch" />
+        <TextView
+            android:id="@+id/tvRoverLaunchTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/rover_launch_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoverStatusTitle" />
 
-    <TextView
-        android:id="@+id/tvRoverStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:text="Rover Status:"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        <TextView
+            android:id="@+id/tvRoverLandTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/rover_landing_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoverLaunchTitle" />
 
-    <TextView
-        android:id="@+id/tvRoverCamera"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="Rover Camera:"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRoverLaunch" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <TextView
+            android:id="@+id/tvRoverStatusTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/rover_status_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoverNameDetailTitle" />
+
+        <TextView
+            android:id="@+id/tvTotalPhotosTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@string/total_photos_title"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoverLandTitle" />
+
+        <TextView
+            android:id="@+id/tvRoveNameDetail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{manifest.photo_manifest.name}"
+            app:layout_constraintStart_toStartOf="@+id/tvRoverLaunchDate"
+            app:layout_constraintTop_toTopOf="@+id/tvRoverNameDetailTitle" />
+
+        <TextView
+            android:id="@+id/tvRoverLaunchDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{manifest.photo_manifest.launch_date}"
+            app:layout_constraintStart_toStartOf="@+id/tvRoverLandingDate"
+            app:layout_constraintTop_toTopOf="@+id/tvRoverLaunchTitle" />
+
+        <TextView
+            android:id="@+id/tvRoverPhotoTotal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{String.valueOf(manifest.photo_manifest.total_photos)}"
+            app:layout_constraintStart_toStartOf="@+id/tvRoverLaunchDate"
+            app:layout_constraintTop_toTopOf="@+id/tvTotalPhotosTitle" />
+
+        <TextView
+            android:id="@+id/tvRoverLandingDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginTop="16dp"
+            android:text="@{manifest.photo_manifest.landing_date}"
+            app:layout_constraintStart_toEndOf="@+id/tvRoverLandTitle"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoverLaunchDate" />
+
+        <TextView
+            android:id="@+id/tvRoverStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@{manifest.photo_manifest.status}"
+            app:layout_constraintStart_toStartOf="@+id/tvRoverLandingDate"
+            app:layout_constraintTop_toBottomOf="@+id/tvRoveNameDetail" />
+
+        <Button
+            android:id="@+id/btnDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="@color/primaryDarkColor"
+            android:text="@string/close"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvTotalPhotosTitle" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

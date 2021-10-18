@@ -5,17 +5,10 @@ import com.mattg.rovergallery.models.ParameterResponse
 import retrofit2.Call
 import retrofit2.http.*
 
+/**
+ * Api interface
+ */
 interface MarsApi {
-
-    /**
-     * Returns the default page suggested by this api but allows for
-     * changing of the rover
-     */
-    @GET("/{rover}/photos?sol=1000")
-    fun getPageByRover(
-                       @Path("rover") rover: String,
-                       @Query("page") page: Int,
-                       @Query("api_key") key: String) : Call<ParameterResponse>
 
     @GET("mars-photos/api/v1/rovers/{name}/photos")
     suspend fun getPageByRoverAndSol(
@@ -23,6 +16,14 @@ interface MarsApi {
         @Query("sol") sol: Int,
         @Query("page") page: Int,
         @Query("api_key") key: String) : ParameterResponse
+    @GET("mars-photos/api/v1/rovers/{name}/photos")
+
+    suspend fun getPageByRoverAndEarthDate(
+        @Path("name") rover: String,
+        @Query("earth_date") earthDate: String,
+        @Query("page") page: Int,
+        @Query("api_key") key: String) : ParameterResponse
+
 
     /**
      * Gets the photos from a given rover at a given time

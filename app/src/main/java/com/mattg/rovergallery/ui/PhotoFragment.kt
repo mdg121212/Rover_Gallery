@@ -7,9 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.fragment.navArgs
-import com.mattg.rovergallery.R
 import com.mattg.rovergallery.databinding.FragmentSecondBinding
 import com.mattg.rovergallery.utils.getProgressDrawable
 import com.mattg.rovergallery.utils.loadImage
@@ -31,7 +28,7 @@ class PhotoFragment : BaseFragment() {
     ): View? {
         _binding = FragmentSecondBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(requireActivity()).get(PhotosViewModel::class.java)
-        (activity as AppCompatActivity).supportActionBar?.title = "Photo"
+        (activity as AppCompatActivity).supportActionBar?.title = "Photo Details"
         (activity as AppCompatActivity).supportActionBar?.setDisplayHomeAsUpEnabled(true)
         return binding.root
     }
@@ -40,12 +37,18 @@ class PhotoFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.viewModel = viewModel
         initViews()
-           // findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
     }
 
-    fun initViews(){
+    private fun initViews() {
         binding.fabPhotoDetail.setOnClickListener {
-            showBottomSheetDetailDialog(requireContext())
+            //get whatever value the manifest event is holding
+            viewModel.manifestResponse.value?.peekContent().let { value ->
+                    value?.let { showBottomSheetDetailDialog(requireContext(), value) }
+                }
+
+        }
+        viewModel._selectedPhoto.value.apply {
+            binding.ivPhotoLarge.loadImage(this?.img_src, getProgressDrawable(requireContext()))
         }
     }
 

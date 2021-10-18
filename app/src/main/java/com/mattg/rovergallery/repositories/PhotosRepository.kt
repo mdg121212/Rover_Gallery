@@ -3,16 +3,14 @@ package com.mattg.rovergallery.repositories
 import android.app.Application
 import android.util.Log
 import com.mattg.rovergallery.ManifestCallback
-import com.mattg.rovergallery.models.ManifestResponse
 import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.network.MarsApiCaller
 import com.mattg.rovergallery.network.PhotosPagingSource
-import java.util.concurrent.Future
 
 /**
  * Repository class to handle interaction with photo clas
  */
-class PhotosRepository (private val application: Application){
+class PhotosRepository(private val application: Application) {
     private val api = MarsApiCaller
 
     suspend fun getSearchedPhotosFromApiByRover(
@@ -24,18 +22,46 @@ class PhotosRepository (private val application: Application){
         return MarsApiCaller.getPhotosByRoverAndSol(application, roverName, sol, pageIndex)
     }
 
+    suspend fun getSearchedPhotosFromApiByRoverEarthDate(
+        string: String,
+        roverName: String,
+        date: String,
+        pageIndex: Int,
+    ): ParameterResponse {
+        return MarsApiCaller.getPhotosByRoverAndEarthDate(application, roverName, date, pageIndex)
+    }
+
     /**
      * Returns a paging source based on input via retrofit
      */
     fun getPagedData(application: Application, roverName: String, sol: Int): PhotosPagingSource {
-        Log.d("PageTrack: ", "should be returning new data with params name: $roverName and sol:$sol")
-        val data = PhotosPagingSource(
-            application,
-            this,
-            sol,
-            roverName,
-        )
-        Log.d("PageTrack: ", "new object reference is : $data")
+        val data =
+            PhotosPagingSource(
+                application,
+                this,
+                sol,
+                null,
+                roverName,
+            )
+        return data;
+    }
+
+    /**
+     * Returns a paging source based on input via retrofit for earth date selection
+     */
+    fun getPagedDataEarthDate(
+        application: Application,
+        roverName: String,
+        date: String
+    ): PhotosPagingSource {
+        val data =
+            PhotosPagingSource(
+                application,
+                this,
+                null,
+                date,
+                roverName,
+            )
         return data;
     }
 

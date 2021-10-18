@@ -7,8 +7,6 @@ import com.mattg.rovergallery.ManifestCallback
 import com.mattg.rovergallery.R
 import com.mattg.rovergallery.models.ManifestResponse
 import com.mattg.rovergallery.models.ParameterResponse
-import com.mattg.rovergallery.utils.RoverCameras
-import com.mattg.rovergallery.utils.RoverName
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -23,7 +21,7 @@ object MarsApiCaller {
     private val BASE_URL = "https://api.nasa.gov/"
     private val MANIFEST_URL = "https://api.nasa.gov/mars-photos/api/v1/manifests/"
 
-    private fun getApi(context: Context, type: Int) : Retrofit {
+    private fun getApi(context: Context, type: Int): Retrofit {
         //   if(api == null){
         val okHttpClient = OkHttpClient.Builder()
             .connectTimeout(1, TimeUnit.MINUTES)
@@ -31,16 +29,17 @@ object MarsApiCaller {
             .readTimeout(1, TimeUnit.MINUTES)
         val logging = HttpLoggingInterceptor()
         logging.level = HttpLoggingInterceptor.Level.BODY
-        if(BuildConfig.DEBUG){
+        if (BuildConfig.DEBUG) {
             okHttpClient.addInterceptor(logging)
         }
         //define and add a cache
         val cacheSize = 5 * 1024 * 1024L // = 5mb cache
-        val cache = Cache(context.cacheDir, cacheSize) // the directory is obtained with context.cacheDir
+        val cache =
+            Cache(context.cacheDir, cacheSize) // the directory is obtained with context.cacheDir
         //add cache to client
         okHttpClient.cache(cache)
         //add custom interceptor
-        okHttpClient.addInterceptor{ chain ->
+        okHttpClient.addInterceptor { chain ->
             //get the outgoing request
             val request = chain.request()
             //add another header to this request, it's been built but build a new one
@@ -49,42 +48,29 @@ object MarsApiCaller {
             chain.proceed(newRequest)
         }
         val api = Retrofit.Builder()
-            .baseUrl(if(type == 1) BASE_URL else MANIFEST_URL)
+            .baseUrl(if (type == 1) BASE_URL else MANIFEST_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(okHttpClient.build())
             .build()
         return api
     }
 
-    /**
-     * Private function to return the pre-req for a photos call
-     */
-     private fun marsPhotoApi(context: Context) : MarsApi {
-        return getApi(context, 1).create(MarsApi::class.java)
-    }
-
-    /**
-     * Private function to return the pre-req for a manifest call
-     */
-    private fun marsManifestApi(context: Context) : MarsApi {
-        return getApi(context, 0).create(MarsApi::class.java)
-    }
 
     /**
      * Will make a call for the given rovers manifest, where information about
      * amount of photos, when they were taken, and by what camera can be retrieved
      */
     fun getManifestForRover(context: Context, roverName: String, callback: ManifestCallback) {
-        val manifest =  getApi(context, 0).create(MarsApi::class.java).getBasicManifestForRover(
+        val manifest = getApi(context, 0).create(MarsApi::class.java).getBasicManifestForRover(
             roverName,
             context.resources.getString(R.string.api_key),
-            ).enqueue(
-            object : Callback<ManifestResponse>{
+        ).enqueue(
+            object : Callback<ManifestResponse> {
                 override fun onResponse(
                     call: Call<ManifestResponse>,
                     response: Response<ManifestResponse>
                 ) {
-                    if(response.isSuccessful){
+                    if (response.isSuccessful) {
                         response.body()?.let { callback.onData(it) }
                     }
                 }
@@ -94,10 +80,18 @@ object MarsApiCaller {
                 }
 
             }
-            )
+        )
     }
 
-    suspend fun getPhotosByRoverAndSol(context: Context, roverName: String, sol: Int, page: Int) : ParameterResponse {
+    /**
+     * Gets paginated results for a given rover on a given sol date
+     */
+    suspend fun getPhotosByRoverAndSol(
+        context: Context,
+        roverName: String,
+        sol: Int,
+        page: Int
+    ): ParameterResponse {
         return getApi(context, 1).create(MarsApi::class.java).getPageByRoverAndSol(
             roverName,
             sol,
@@ -107,9 +101,20 @@ object MarsApiCaller {
     }
 
     /**
-     * Returns an api call for photos by rover ready to enqueue
+     * Gets paginated results for a given rover on a given earth date
      */
-    fun getPhotosByRoverAndCamera(context: Context, roverName: RoverName, cameraList: List<RoverCameras>) {
-
+    suspend fun getPhotosByRoverAndEarthDate(
+        context: Context,
+        roverName: String,
+        earthDate: String,
+        page: Int
+    ): ParameterResponse {
+        return getApi(context, 1).create(MarsApi::class.java).getPageByRoverAndEarthDate(
+            roverName,
+            earthDate,
+            page,
+            context.resources.getString(R.string.api_key)
+        )
     }
+
 }

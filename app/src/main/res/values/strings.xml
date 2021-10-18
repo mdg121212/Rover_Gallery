@@ -13,4 +13,11 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="search_button_for_photos">Search button for photos</string>
     <string name="content_desc_photo_fab">Button that displays the text photo details of the photo.</string>
+    <string name="rover_name_title">Rover Name:</string>
+    <string name="rover_launch_title">Rover Launch:</string>
+    <string name="rover_landing_title">Rover Landing:</string>
+    <string name="rover_status_title">Rover Status:</string>
+    <string name="total_photos_title">Total Photos:</string>
+    <string name="sol_spinner_description">A number picker for the date, in the format of a Martian \'Sol\'</string>
+    <string name="close">Close</string>
 </resources>

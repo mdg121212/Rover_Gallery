@@ -1,20 +1,13 @@
 package com.mattg.rovergallery
 
 import android.content.Context
-import android.content.res.Resources
-import android.graphics.Color
-import android.graphics.ColorFilter
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.animation.AlphaAnimation
-import android.widget.ProgressBar
 import androidx.paging.PagingDataAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.CircularProgressDrawable
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
 import com.mattg.rovergallery.databinding.ItemRvPhotoBinding
 import com.mattg.rovergallery.models.Photo
 import com.mattg.rovergallery.utils.getProgressDrawable
@@ -27,6 +20,10 @@ class PhotosAdapter : PagingDataAdapter<Photo, PhotoViewHolder>(PhotoComparator)
 
     private lateinit var callback: RecyclerCallback
     private lateinit var context: Context
+
+   fun checkValue() : Boolean {
+       return this.itemCount == 0
+   }
 
     fun setCallBack(callbackIn: RecyclerCallback) {
         this.callback = callbackIn

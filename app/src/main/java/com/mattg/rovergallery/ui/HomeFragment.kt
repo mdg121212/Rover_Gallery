@@ -1,63 +1,67 @@
 package com.mattg.rovergallery.ui
 
+import android.os.Build
 import android.os.Bundle
-import android.provider.ContactsContract
-import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
+import androidx.annotation.RequiresApi
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.paging.LoadState
 import androidx.recyclerview.widget.GridLayoutManager
-import com.mattg.rovergallery.*
+import com.mattg.rovergallery.CompleteCallback
+import com.mattg.rovergallery.PhotosAdapter
+import com.mattg.rovergallery.R
+import com.mattg.rovergallery.RecyclerCallback
 import com.mattg.rovergallery.databinding.FragmentFirstBinding
-import com.mattg.rovergallery.utils.EventObserver
 import com.mattg.rovergallery.viewModels.PhotosViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
  */
+
 class HomeFragment : BaseFragment() {
 
     private var _binding: FragmentFirstBinding? = null
     private lateinit var viewModel: PhotosViewModel
     private lateinit var photoAdapter: PhotosAdapter
     private val binding get() = _binding!!
-    private var job: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentFirstBinding.inflate(inflater, container, false)
         viewModel = ViewModelProvider(requireActivity()).get(PhotosViewModel::class.java)
         binding.viewModel = viewModel
+        binding.lifecycleOwner = this
         return binding.root
 
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.clError.visibility = View.GONE
         initViews()
         CoroutineScope(Dispatchers.IO).launch {
+            initViewModel()
             observeSearch()
-
         }
         observeViewModel()
+
     }
 
-    override fun onStop() {
-        super.onStop()
-        job?.cancel()
+    //get a default manifest for rover curiosity
+    private fun initViewModel() {
+        viewModel.getManifest("Curiosity")
     }
 
     /**
@@ -66,76 +70,71 @@ class HomeFragment : BaseFragment() {
     private fun observeViewModel() {
         viewModel.toastEvent.observe(viewLifecycleOwner) {
             it.getContentIfNotHandled()?.apply {
-                Log.d("EVENTCHECK", "toast event received")
                 Toast.makeText(requireContext(), this, Toast.LENGTH_SHORT).show()
             }
         }
-        viewModel.dialogEvent.observe(viewLifecycleOwner){
+        viewModel.dialogEvent.observe(viewLifecycleOwner) {
             it.getContentIfNotHandled()?.apply {
-                Log.d("EVENTCHECK", "dialog event received")
-                 closeBottomSheet()
+                closeBottomSheet()
             }
         }
-        viewModel.spinnerEvent.observe(viewLifecycleOwner){
+        viewModel.spinnerEvent.observe(viewLifecycleOwner) {
             it.getContentIfNotHandled()?.apply {
-                Log.d("EVENTCHECK", "spinner event received")
-                when(this){
-                    0 ->
-                    {
-                        Log.d("EVENTCHECK", "spinner event received setting gone")
+                when (this) {
+                    0 -> {
                         binding.progressMain.visibility = View.GONE
                     }
-                    1 ->
-                    {
-                        Log.d("EVENTCHECK", "spinner event received setting visible")
+                    1 -> {
                         binding.progressMain.visibility = View.VISIBLE
                     }
                 }
             }
         }
+
     }
 
     private suspend fun observeSearch() {
-        viewModel.getFlow()?.collectLatest {
+        viewModel.getFlow().collectLatest {
             photoAdapter.submitData(it)
+            photoAdapter.apply {
+                addLoadStateListener { loadState ->
+                    val isEmptyList =
+                        loadState.refresh is LoadState.NotLoading && this.itemCount == 0
+                    handleNoData(isEmptyList)
+                }
+            }
         }
     }
 
     /**
      * Initialize adapter and callback for this view
      */
+    @RequiresApi(Build.VERSION_CODES.O)
     private fun initViews() {
-        binding.floatingActionButton2.setOnClickListener {
-            val roverOptionCallback  = RoverCallback{ rover, position ->
-                Log.d("EVENTCHECK", "rover callback received")
-                viewModel.setRoverSelection(rover)
-            }
-            val dateCallback = DateCallback {oldDate, newDate ->
-                Log.d("EVENTCHECK", "date callback received")
-                viewModel.setDateSelection(newDate)
-                binding.tvMainDate.setText(newDate.toString())
-            }
+        binding.btnDateSearch.setOnClickListener {
             val doneCallback = CompleteCallback { complete ->
                 viewModel.closeDialog()
                 viewModel.toggleSpinner()
-                //closeBottomSheet()
                 CoroutineScope(Dispatchers.IO).launch {
-                    Log.d("EVENTCHECK", "done callback received")
                     observeSearch()
                 }
             }
-            showBottomSheetSelectionDialog(
-                requireContext(),
-                roverOptionCallback,
-                dateCallback,
-                doneCallback
-            )
+            showDateSelectDialog(requireContext(), doneCallback)
+        }
+        binding.floatingActionButton2.setOnClickListener {
+            val doneCallback = CompleteCallback { complete ->
+                viewModel.closeDialog()
+                viewModel.toggleSpinner()
+                CoroutineScope(Dispatchers.IO).launch {
+                    observeSearch()
+                }
+            }
+            showRoverSelectDialog(requireContext(), doneCallback)
         }
         //handle adapter
         photoAdapter = PhotosAdapter()
         //add callback for adapter results
         val callback = RecyclerCallback { photo, position ->
-            //TODO utilize retrieved parameters
             viewModel.setPhoto(photo)
             findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
         }
@@ -147,6 +146,20 @@ class HomeFragment : BaseFragment() {
         binding.rvImages.apply {
             adapter = photoAdapter
             layoutManager = GridLayoutManager(requireContext(), 2)
+        }
+    }
+
+    private fun handleNoData(emptyList: Boolean) {
+        when (emptyList) {
+            true -> {
+                binding.rvImages.visibility = View.INVISIBLE
+                binding.clError.visibility = View.VISIBLE
+            }
+
+            false -> {
+                binding.rvImages.visibility = View.VISIBLE
+                binding.clError.visibility = View.GONE
+            }
         }
     }
 

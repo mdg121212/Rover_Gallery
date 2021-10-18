@@ -2,9 +2,7 @@ package com.mattg.rovergallery.viewModels
 
 import android.app.Application
 import android.util.Log
-import android.view.View
 import android.widget.TextView
-import androidx.databinding.Bindable
 import androidx.databinding.BindingAdapter
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
@@ -14,44 +12,28 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.mattg.rovergallery.DataCallback
 import com.mattg.rovergallery.ManifestCallback
 import com.mattg.rovergallery.models.ManifestResponse
-import com.mattg.rovergallery.utils.Event
-import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.models.Photo
 import com.mattg.rovergallery.network.PhotosPagingSource
 import com.mattg.rovergallery.repositories.PhotosRepository
-import com.mattg.rovergallery.utils.RoverCameras
-import com.mattg.rovergallery.utils.RoverName
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import okhttp3.internal.notify
-import java.util.concurrent.Flow
+import com.mattg.rovergallery.utils.Event
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class PhotosViewModel(app: Application) : AndroidViewModel(app) {
-
-//    sealed class Event {
-//        object CloseDialog: Event()
-//        object ToggleProgress: Event()
-//        data class ShowSnackBar(val text: String): Event()
-//        data class ShowToast(val text: String): Event()
-//    }
-//
-//    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-//    val eventsFlow = eventChannel.receiveAsFlow()
-
+@HiltViewModel
+class PhotosViewModel @Inject constructor(app: Application) : AndroidViewModel(app) {
 
     private val photoRepo = PhotosRepository(app)
+
     //public so that they can be data bound
-    val _roverChoice = MutableLiveData<String>("Curiosity")
-    val _solChoice = MutableLiveData<Int>(1000)
-    val _solChoiceString = MutableLiveData<String>("1000")
+    val _roverChoice = MutableLiveData<String>()
+    val _solChoice = MutableLiveData<Int>()
+    val _earthDateChoice = MutableLiveData<String>()
+    val _solChoiceString = MutableLiveData<String>()
     var _selectedPhoto = MutableLiveData<Photo>()
-    var _manifestResponse = MutableLiveData<ManifestResponse>()
-    val manifestResponse: LiveData<ManifestResponse> get() = _manifestResponse
+    var _manifestResponse = MutableLiveData<Event<ManifestResponse>>()
+    val manifestResponse: LiveData<Event<ManifestResponse>> get() = _manifestResponse
 
     private val _toastEvent = MutableLiveData<Event<String>>()
     private val _spinnerEvent = MutableLiveData<Event<Int>>()
@@ -59,6 +41,14 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
     val toastEvent: LiveData<Event<String>> get() = _toastEvent
     val spinnerEvent: LiveData<Event<Int>> get() = _spinnerEvent
     val dialogEvent: LiveData<Event<Int>> get() = _dialogEvent
+    var lastRover: String = ""
+    var isEarthDateSearch = false;
+
+    init {
+        setRoverSelection("Curiosity")
+        setDateSelection(1000)
+        setEarthDateSelection("2015-05-30")
+    }
 
     //initialize the flow variable with default parameters
     var flow = Pager(
@@ -66,37 +56,57 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
         // PagingConfig, such as prefetchDistance.
         PagingConfig(pageSize = 25)
     ) {
-        PhotosPagingSource(app, photoRepo, _solChoice.value, _roverChoice.value)
+        PhotosPagingSource(app, photoRepo, _solChoice.value, _earthDateChoice.value, null)
     }.flow.cachedIn(viewModelScope)
 
     /**
      * Resets the flow data
      */
     @JvmName("getFlow1")
-    fun getFlow(): kotlinx.coroutines.flow.Flow<PagingData<Photo>>? {
-        val fromRepo = _solChoice.value?.let {
-            _roverChoice.value?.let { it1 ->
-                Log.d("PageTrack", "searching for sol: $it and rover: $it1")
-                photoRepo.getPagedData(
-                    getApplication(),
-                    it1,
-                    it,
-                )
+    fun getFlow(): kotlinx.coroutines.flow.Flow<PagingData<Photo>> {
+
+        val fromRepo = when (isEarthDateSearch) {
+            true -> {
+                _earthDateChoice.value?.let {
+                    _roverChoice.value?.let { it1 ->
+                        Log.d("PageTrack", "searching for sol: $it and rover: $it1")
+                        photoRepo.getPagedDataEarthDate(
+                            getApplication(),
+                            it1,
+                            it,
+                        )
+                    }
+                }
+            }
+            false -> {
+                _solChoice.value?.let {
+                    _roverChoice.value?.let { it1 ->
+                        Log.d("PageTrack", "searching for sol: $it and rover: $it1")
+                        photoRepo.getPagedData(
+                            getApplication(),
+                            it1,
+                            it,
+                        )
+                    }
+                }
             }
         }
-        fromRepo?.let {
-            Log.d("PageTrack", "from repo was not null!! getting new data?")
-            flow = Pager(
-                PagingConfig(pageSize = 25)
-            ) {
-                  it
-            }.flow.cachedIn(viewModelScope)
-            Log.d("PageTrack", "returning newly retrieved flow")
-            toggleSpinner()
-            return flow
+
+        try {
+            fromRepo?.let {
+                flow = Pager(
+                    PagingConfig(pageSize = 25)
+                ) {
+                    it
+                }.flow.cachedIn(viewModelScope)
+                toggleSpinner()
+                return flow
+            }
+        } catch (e: Throwable) {
+            Log.e("FlowError", "${e.message}")
+            e.printStackTrace()
         }
         //return current data if not changed
-        Log.d("PageTrack", "returning old flow")
         return flow;
     }
 
@@ -107,12 +117,41 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
         _selectedPhoto.postValue(photo)
     }
 
+    /**
+     * Sets the rover name for display and use in api calls
+     */
     fun setRoverSelection(rover: String) {
-        _roverChoice.postValue(rover)
+        lastRover = _roverChoice.value.toString()
+        _roverChoice.value = (rover)
+        getManifest(rover)
     }
 
+    /**
+     * In the event of a cancelled search flow, this will reset values as far as the ui is
+     * concerned
+     */
+    fun lastRover() {
+        _roverChoice.value = lastRover
+    }
+
+    /**
+     * Sets the martial sol selection for display and use in api calls
+     */
     fun setDateSelection(newDate: Int) {
-        _solChoice.postValue(newDate)
+        _solChoice.value = (newDate)
+        _solChoiceString.value = newDate.toString()
+    }
+
+    fun setSol(newSol: Int) {
+        _solChoice.postValue(newSol)
+        _solChoiceString.postValue(newSol.toString())
+    }
+
+    /**
+     * Sets the earth date string for display and use in api calls
+     */
+    fun setEarthDateSelection(dateString: String) {
+        _earthDateChoice.value = dateString
     }
 
     /**
@@ -130,20 +169,19 @@ class PhotosViewModel(app: Application) : AndroidViewModel(app) {
 
     /**
      * Gets the manifest data for a chosen rover (for detail fragments bottom sheet info view)
+     * and sets a live data backing variable to this response
      */
-    fun getManifest() {
-        _roverChoice.value?.let {
-            photoRepo.getManifest(
-                getApplication(),
-                it,
-                ManifestCallback(){ response ->
-                _manifestResponse.postValue(response)
-                }
-            )
-        }
+    fun getManifest(rover: String) {
+        Log.d("MANIFESTY", "GETTING MANIFEST FOR $rover")
+        photoRepo.getManifest(
+            getApplication(),
+            rover,
+            ManifestCallback() { response ->
+                _manifestResponse.value = (Event(response))
+            }
+        )
     }
-
-    object bindingObject{
+    object bindingObject {
         @JvmStatic
         @BindingAdapter("android:text")
         fun setIntText(textView: TextView, number: Int) {

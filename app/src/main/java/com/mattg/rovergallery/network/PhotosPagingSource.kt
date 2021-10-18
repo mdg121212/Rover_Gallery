@@ -4,7 +4,6 @@ import android.app.Application
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.mattg.rovergallery.DataCallback
 import com.mattg.rovergallery.R
 import com.mattg.rovergallery.models.ParameterResponse
 import com.mattg.rovergallery.models.Photo
@@ -14,16 +13,16 @@ import java.io.IOException
 
 
 private const val NASA_STARTING_PAGE_INDEX = 1
-private const val NETWORK_PAGE_SIZE = 25
 
 /**
  * Paging source adapted from google documentation and codelabs to make retrofit call, and return
- * paginated results to the ui layer
+ * paginated results to the ui
  */
 class PhotosPagingSource(
     val application: Application,
     private val photoRepo: PhotosRepository,
     private val sol: Int?,
+    private val date: String?,
     private val rover: String?,//to handle the network calls
 
 ) : PagingSource<Int, Photo>() {
@@ -41,13 +40,20 @@ class PhotosPagingSource(
 
         return try {
             var response: ParameterResponse
-            if(rover != null && sol != null) {
+            if (rover != null && sol != null && date == null) {
                 Log.d("PageTrack", "getting updated data with rover: $rover and sol: $sol")
                 response = photoRepo.getSearchedPhotosFromApiByRover(
                     application.resources.getString(R.string.api_key),
                     rover,
                     sol,
                     pageIndex,
+                )
+            } else if (rover != null && date != null && sol == null) {
+                response = photoRepo.getSearchedPhotosFromApiByRoverEarthDate(
+                    application.resources.getString(R.string.api_key),
+                    rover,
+                    date,
+                    pageIndex
                 )
             } else {
                 Log.d("DATATEST", "getting standard data")
@@ -61,7 +67,8 @@ class PhotosPagingSource(
 
             val photos = response.photos!!
 
-            Log.d("DATATEST", "GOT PHOTOS ${photos.size}")
+            Log.d("PageTrack", "GOT PHOTOS ${photos.size}")
+
             val nextKey =
                 if (photos.isEmpty()) {
                     null
@@ -74,7 +81,8 @@ class PhotosPagingSource(
                 nextKey = nextKey
             )
 
-        }catch (e: IOException) {
+
+        } catch (e: IOException) {
             Log.d("DATATESTERROR", e.toString())
             // IOException for network failures.
             return LoadResult.Error(e)

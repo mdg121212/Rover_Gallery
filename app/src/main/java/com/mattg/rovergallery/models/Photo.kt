@@ -2,10 +2,10 @@ package com.mattg.rovergallery.models
 
 import android.widget.ImageView
 import androidx.databinding.BindingAdapter
-import com.bumptech.glide.Glide
-import com.mattg.rovergallery.utils.getProgressDrawable
-import com.mattg.rovergallery.utils.loadImage
 
+/**
+ * Represents a photo object displayed in both main screen list and detail screen
+ */
 data class Photo (
     var id: Int = 0,
     var sol: Int = 0,
@@ -22,7 +22,7 @@ data class Photo (
         @BindingAdapter("marsImage")
         fun loadImage(view: ImageView, profileImage: String) {
             view.apply {
-                loadImage(profileImage, getProgressDrawable(context))
+                loadImage(view, profileImage)
             }
         }
     }
