@@ -128,7 +128,7 @@ open class BaseFragment : Fragment() {
     ) {
         if(isOnline(requireContext())) {
             Toast.makeText(context, "Getting dates..", Toast.LENGTH_LONG).show()
-            Thread.sleep(2000)
+            Thread.sleep(3000)
             val end = viewModel.manifestResponse.value?.peekContent()?.photo_manifest?.max_date
             val start = viewModel.manifestResponse.value?.peekContent()?.photo_manifest?.landing_date
             val builder = MaterialDatePicker.Builder.datePicker().apply {
