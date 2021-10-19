@@ -12,19 +12,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.AppCompatSpinner
-        android:id="@+id/spinnerRover"
-        android:layout_width="175dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:contentDescription="@string/sol_spinner_description"
-        android:minHeight="48dp"
-        android:spinnerMode="dialog"
-        android:accessibilityPaneTitle="Rover Choices"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvRoverOptionTitle" />
-
 
     <TextView
         android:id="@+id/tvRoverOptionTitle"
@@ -32,23 +19,55 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="Select A Rover:"
-        app:layout_constraintEnd_toEndOf="@+id/spinnerRover"
-        app:layout_constraintHorizontal_bias="0.493"
-        app:layout_constraintStart_toStartOf="@+id/spinnerRover"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+
+    <RadioGroup
+        android:id="@+id/radioRover"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvRoverOptionTitle">
+
+
+        <RadioButton
+            android:id="@+id/rbCuriosity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+
+            android:text="Curiosity"
+            android:textSize="24sp" />
+
+        <RadioButton
+            android:id="@+id/rbOpportunity"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Opportunity"
+            android:textSize="24sp" />
+
+        <RadioButton
+            android:id="@+id/rbSpirit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Spirit"
+            android:textSize="24sp" />
+
+    </RadioGroup>
 
     <Button
         android:id="@+id/btnSelectRover"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
         android:backgroundTint="@color/primaryDarkColor"
         android:text="Make Rover Selection"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinnerRover" />
+        app:layout_constraintTop_toBottomOf="@+id/radioRover" />
 </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

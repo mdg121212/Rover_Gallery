@@ -1,8 +1,13 @@
 package com.mattg.rovergallery.ui
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.util.Log
+import android.view.MotionEvent
 import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.*
@@ -12,6 +17,7 @@ import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.mattg.rovergallery.CompleteCallback
+import com.mattg.rovergallery.ManifestCallback
 import com.mattg.rovergallery.R
 import com.mattg.rovergallery.databinding.DialogDatePickBinding
 import com.mattg.rovergallery.databinding.DialogDetailBinding
@@ -21,6 +27,10 @@ import com.mattg.rovergallery.utils.fromCalenderSelection
 import com.mattg.rovergallery.utils.toLocalDate
 import com.mattg.rovergallery.viewModels.PhotosViewModel
 import java.time.ZoneId
+import android.view.View.OnTouchListener
+
+
+
 
 
 
@@ -66,59 +76,47 @@ open class BaseFragment : Fragment() {
      * Shows an options dialog that triggers api return changes.  Has a callback
      * to return results to trigger view model operations through repository
      */
+    @SuppressLint("ClickableViewAccessibility")
     fun showRoverSelectDialog(
         context: Context,
         doneCallback: CompleteCallback?
     ) {
 
-            roverSelectBinding = DialogSelectionBinding.inflate(layoutInflater)
-            roverSelectBinding.viewModel = viewModel
-            roverOptionDialog = BottomSheetDialog(context).apply {
-                setContentView(roverSelectBinding.root)
-                window?.setLayout(
-                    ConstraintLayout.LayoutParams.MATCH_PARENT,
-                    ConstraintLayout.LayoutParams.WRAP_CONTENT
-                )
-            }
-        ArrayAdapter.createFromResource(
-            requireContext(),
-            R.array.rover_array,
-            android.R.layout.simple_spinner_item
-        ).also { adapter ->
-            // Specify the layout to use when the list of choices appears
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-            roverSelectBinding.spinnerRover.adapter = adapter
-        }
-        var isFirst = true;
+            if(isOnline(requireContext())) {
+                roverSelectBinding = DialogSelectionBinding.inflate(layoutInflater)
+                roverSelectBinding.viewModel = viewModel
+                roverOptionDialog = BottomSheetDialog(context).apply {
+                    setContentView(roverSelectBinding.root)
+                    window?.setLayout(
+                        ConstraintLayout.LayoutParams.MATCH_PARENT,
+                        ConstraintLayout.LayoutParams.WRAP_CONTENT
+                    )
+                }
 
-        roverSelectBinding.spinnerRover.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    if(isFirst){
-                        isFirst = false
-                        return
+                roverSelectBinding.radioRover.setOnCheckedChangeListener { group, checkedId ->
+                    when(checkedId){
+                        R.id.rbCuriosity -> {
+                            viewModel.setRoverSelection("Curiosity")
+                        }
+                        R.id.rbOpportunity -> {
+                            viewModel.setRoverSelection("Opportunity")
+                        }
+                        R.id.rbSpirit -> {
+                            viewModel.setRoverSelection("Spirit")
+                        }
                     }
-                    viewModel.setRoverSelection(parent?.getItemAtPosition(position) as String)
-                    return
                 }
 
-                override fun onNothingSelected(parent: AdapterView<*>?) {
 
+                roverSelectBinding.btnSelectRover.setOnClickListener {
+                    roverOptionDialog?.dismiss()
+                    showDateSelectDialog(context, doneCallback)
                 }
+                roverOptionDialog?.show()
 
+            } else {
+                Toast.makeText(requireContext(), "No internet connection detected", Toast.LENGTH_SHORT).show()
             }
-            roverSelectBinding.btnSelectRover.setOnClickListener {
-                roverOptionDialog?.dismiss()
-                showDateSelectDialog(context, doneCallback)
-            }
-            roverOptionDialog?.show()
-
-
     }
 
     /**
@@ -128,17 +126,31 @@ open class BaseFragment : Fragment() {
         context: Context,
         doneCallback: CompleteCallback?
     ) {
+        if(isOnline(requireContext())) {
+            Thread.sleep(1000)
             val end = viewModel.manifestResponse.value?.peekContent()?.photo_manifest?.max_date
             val start = viewModel.manifestResponse.value?.peekContent()?.photo_manifest?.landing_date
             val builder = MaterialDatePicker.Builder.datePicker().apply {
                 setCalendarConstraints(
-                        CalendarConstraints.Builder().setStart(start?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                            .setEnd(end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                            .setOpenAt(end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
-                            .build()
+                    CalendarConstraints.Builder().setStart(
+                        start?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                            .toEpochMilli()
+                    )
+                        .setEnd(
+                            end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                                .toEpochMilli()
+                        )
+                        .setOpenAt(
+                            end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                                .toEpochMilli()
+                        )
+                        .build()
                 )
                 setTitleText("Select Mission Date")
-                setSelection(end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli())
+                setSelection(
+                    end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant()
+                        .toEpochMilli()
+                )
             }
             val picker = builder.build()
 
@@ -148,10 +160,13 @@ open class BaseFragment : Fragment() {
 
                 addOnPositiveButtonClickListener {
                     this.dismiss()
-                    if(selection!! > end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()) {
+                    if (selection!! > end?.toLocalDate()!!.atStartOfDay(ZoneId.systemDefault())
+                            .toInstant().toEpochMilli()
+                    ) {
                         AlertDialog.Builder(requireContext()).setTitle("Invalid Date Selection")
                             .setMessage("Last date for available photos from ${viewModel._roverChoice.value} is $end")
-                            .setPositiveButton("Choose New Date"
+                            .setPositiveButton(
+                                "Choose New Date"
                             ) { _, _ -> showDateSelectDialog(context, doneCallback) }
                             .setNegativeButton("Cancel") { _, _ ->
                                 picker.dismiss()
@@ -170,8 +185,11 @@ open class BaseFragment : Fragment() {
                         }
                         doneCallback?.onComplete(true)
                     }
-            }
+                }
 
+            }
+        }else {
+            Toast.makeText(requireContext(), "No internet connection detected", Toast.LENGTH_SHORT).show()
         }
 
     }
@@ -207,6 +225,7 @@ open class BaseFragment : Fragment() {
             }
             dateOptionDialog?.show()
         }
+
     }
 
     fun closeBottomSheet(){
@@ -215,6 +234,31 @@ open class BaseFragment : Fragment() {
         } else {
             roverOptionDialog?.dismiss()
         }
+    }
+
+    /**
+     * Checks for connection before attempting to search photos
+     */
+    fun isOnline(context: Context): Boolean {
+        val connectivityManager =
+            context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (connectivityManager != null) {
+            val capabilities =
+                connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+            if (capabilities != null) {
+                if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_CELLULAR")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_WIFI")
+                    return true
+                } else if (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)) {
+                    Log.i("Internet", "NetworkCapabilities.TRANSPORT_ETHERNET")
+                    return true
+                }
+            }
+        }
+        return false
     }
 
 }
